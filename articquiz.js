@@ -5,6 +5,11 @@ let image = new Image()
 //elements set up for CSS if player wins (i.e. gets 100 points)
 let bodyElement = document.getElementById('body')
 let pointsIdElement = document.getElementById('points-id')
+let winningElement = document.querySelector('#winning')
+//variable for span element
+let pointsElement = document.querySelector('#points')
+//tracker for points accumulated
+let pointsTally = 0
 //create canvas element and context element - initially used canvas to have "correct"
 // or "wrong" written across the painting but might not do that anymore, we'll see
 let canvas = document.querySelector('#canvas')
@@ -20,10 +25,7 @@ let titleInput = document.querySelector('#piece-name')
 let dateInput = document.querySelector('#date-made')
 let artistInput = document.querySelector('#artist-name')
 let continueElement = document.querySelector('#continue')
-//variable for span element
-let pointsElement = document.querySelector('#points')
-//tracker for points accumulated
-pointsTally = 0
+
 
 //add return to submit answer for usability
 document.addEventListener('keyup', function() { 
@@ -41,7 +43,7 @@ let title = ''
 let artistName = ''
 let date = ''
 
-//set up boolean for whether the user has tried to answer the question
+//set up boolean for whether the user has tried to answer at least one of the questions
 let hasAnswered = false 
 //pick random page number from their 100 pages of data available for art that meets the contemporary style search result
 let pageNumber = Math.floor(Math.random()*(100))
@@ -112,6 +114,12 @@ function getNewArtPiece () {
 //call getNewArtPiece for original page load
 getNewArtPiece()
 
+//function to check if pieces of user answer are in the full answer
+//taken from https://stackoverflow.com/questions/53606337/check-if-array-contains-all-elements-of-another-array
+function answerCheck(arr, arr2){
+    return arr.every(i => arr2.includes(i));
+  }
+
 //submit button event listener
 submitButton.addEventListener('click', function () {
     //reactivate all the inputs
@@ -122,6 +130,8 @@ submitButton.addEventListener('click', function () {
     //so also wanted to make sure to accomodate for the user potentially using them
     //normalize and replace code taken from https://stackoverflow.com/questions/990904/remove-accents-diacritics-in-a-string-in-javascript
     let nameAnswer = artistInput.value.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase()
+    //create a list of the answer to check the pieces against the full correct answer
+    let nameAnswerList = nameAnswer.split(' ')
     //second bit of code to remove extra internal spaces in user answers taken from https://stackoverflow.com/questions/16974664/remove-extra-spaces-in-string-javascript
     nameAnswer = nameAnswer.replace(/\s+/g,' ').trim()
     let normalizedArtistName = artistName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase()
@@ -141,6 +151,10 @@ submitButton.addEventListener('click', function () {
     //check to make sure the user has answered at least one of the questions
     if (nameAnswer.length < 1 && titleAnswer < 1 && dateAnswer < 1){
         alert('You have to answer at least one of the questions')
+        titleInput.disabled = false
+        dateInput.disabled = false
+        artistInput.disabled = false
+        artistInput.focus()
         return
     }
     //if user has reached this far, they've successfully submitted at least one answer
@@ -148,7 +162,7 @@ submitButton.addEventListener('click', function () {
     hasAnswered = true
 
     //logic blocks for calculating whether the user has gotten the answers right
-    if (artistNameList.includes(nameAnswer) || normalizedArtistName == nameAnswer) {
+    if (answerCheck(nameAnswerList, artistNameList) || artistNameList.includes(nameAnswer) || normalizedArtistName == nameAnswer) {
         nameResultElement.innerHTML = `Correct! + 10 Points! ${artistName} is the artist of this piece`
         nameResultElement.classList.remove('text-danger')
         nameResultElement.classList.add('text-success')
@@ -161,12 +175,12 @@ submitButton.addEventListener('click', function () {
     } 
     
     if (titleAnswer == pieceName) {
-        titleResultElement.innerHTML = `Correct! +20 Points! ${title} is the title of this piece`
+        titleResultElement.innerHTML = `Correct! +20 Points! '${title}' is the title of this piece`
         titleResultElement.classList.remove('text-danger')
         titleResultElement.classList.add('text-success')
         pointsTally = pointsTally + 20
     } else if (titleAnswer != '' && titleAnswer != pieceName){
-        titleResultElement.innerHTML = `-5 points. Sorry, the correct answer is ${title}`
+        titleResultElement.innerHTML = `-5 points. Sorry, the correct answer is '${title}'`
         titleResultElement.classList.remove('text-success')
         titleResultElement.classList.add('text-danger')
         pointsTally = pointsTally - 5
@@ -186,13 +200,16 @@ submitButton.addEventListener('click', function () {
 
     //wanted to make sure user couldn't keep submitting right answers to run up their scores
     submitButton.disabled = true
+    //note for how to keep playing after the first question
     continueElement.innerHTML = 'Press "Play Again" to move to the next piece!'
+    
     //get the points tally totaled up based on user answers
     pointsElement.innerHTML = pointsTally
+    //if player gets 100 points or more, they win, so this if block has an event for winning
     if (pointsTally >= 100) {
         bodyElement.classList.toggle('body-gradient')
-        pointsIdElement.classList.toggle('winning')
-        pointsIdElement.innerHTML = `****You win!!! Your total points is ${pointsTally}****`
+        winningElement.classList.toggle('winning')
+        winningElement.innerHTML = `****You win!!! Your total points is ${pointsTally}****`
         continueElement.innerHTML = 'Press "Play Again" to start a new game!'
     }
     
@@ -210,11 +227,11 @@ playAgainButton.addEventListener('click', function(){
     }
 
     if (pointsTally >= 100) {
-        pointsTally = 0
-        pointsIdElement.classList.toggle('winning')
-        bodyElement.classList.toggle('body-gradient')
-        pointsIdElement.innerHTML = 'Current points ='
         pointsElement.innerHTML = 0
+        pointsTally = 0
+        winningElement.classList.toggle('winning')
+        bodyElement.classList.toggle('body-gradient')
+        winningElement.innerHTML = 'The goal of the quiz is to earn 100 points!'
     }
 
     //refocus on the user answer element for their next turn
@@ -234,8 +251,11 @@ playAgainButton.addEventListener('click', function(){
     dateResultElement.innerHTML = ''
     //select another random number from the length of the list of countries
     pageNumber = Math.floor(Math.random()*(100))
+    console.log(pageNumber)
     //reset url
     url = `https://api.artic.edu/api/v1/artworks?page=${pageNumber}`
+    //reset the hasanswered boolean
+    hasAnswered = false
     //reallow the submit button
     submitButton.disabled = false
     //call getNewArtPiece function to select a new artwork
