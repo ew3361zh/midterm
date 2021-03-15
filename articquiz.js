@@ -33,6 +33,8 @@ let dateInput = document.querySelector('#date-made')
 let artistInput = document.querySelector('#artist-name')
 let continueElement = document.querySelector('#continue')
 
+let height = 0
+let width = 0
 
 //add return to submit answer for usability
 document.addEventListener('keyup', function() { 
@@ -107,19 +109,32 @@ function getNewArtPiece () {
             title = articData2.title
             artistName = articData2.artist_title
             
+            //get width and height of the lqip image which can be used to
+            //draw the real image since it's the same
+            width = articData2.thumbnail.width
+            height = articData2.thumbnail.height
+
             //log the artist name, date and title so you can make 
             //sure the program works while using it
             console.log(artistName)
             console.log(title)
             console.log(date)
             
-            //draw the image (may change this later but it's currently working realatively well)
-            image.addEventListener('load', function() {
-            context.drawImage(image, 0, 0, 400, 400) //draws the image after it's loaded
             
-            //start the user on the artist input
+            //draw the image to proportion (may change this later but it's currently working realatively well)
+                image.addEventListener('load', function() {
+                if (height > width) {
+                context.drawImage(image, 0, 0, width/height * 500, 500) //draws the image after it's loaded
+                } else if (width > height) {
+                context.drawImage(image, 0, 0, 500, height/width * 500) //draws the image after it's loaded
+                } else {
+                context.drawImage(image, 0, 0, 500, 500) //draws the image after it's loaded
+                }
+                
+            }) 
+             
             artistInput.focus()
-            })
+            
             
         })
         .catch(error => { //error handling
@@ -264,6 +279,9 @@ playAgainButton.addEventListener('click', function(){
         winningElement.innerHTML = 'The goal of the quiz is to earn 100 points!'
     }
 
+    //clear the canvas for the next upload
+    context.clearRect(0, 0, 500, 500)
+
     //refocus on the user answer element for their next turn
     artistInput.focus()
 
@@ -295,6 +313,9 @@ playAgainButton.addEventListener('click', function(){
     //reallow the submit button
     submitButton.disabled = false
     
+    height = 0
+    width = 0
+
     //call getNewArtPiece function to select a new artwork
     getNewArtPiece()
 })
