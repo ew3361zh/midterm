@@ -108,6 +108,14 @@ function getNewArtPiece () {
            
             
         })
+        .catch(error => { //error handling
+            console.log(error)
+            alert('Error fetching data form the ARTIC API during the secondary piece search')
+        })
+    })
+    .catch(error => { //error handling
+        console.log(error)
+        alert('Error fetching data form the ARTIC API during the initial search')
     })
 }
 
